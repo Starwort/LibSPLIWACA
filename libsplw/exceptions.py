@@ -7,10 +7,10 @@ class FunctionEndError(SPLIWACAException):
     (it should always reach a RETURN statement first)"""
 
 
-class InvalidParamType(SPLIWACAException):
+class BadParamType(SPLIWACAException):
     """Raised when a function or procedure is passed arguments of the wrong type."""
 
 
-class InvalidReturnType(SPLIWACAException):
+class BadReturnType(SPLIWACAException):
     """Raised when a function or procedure returns a value of the wrong type."""
 
