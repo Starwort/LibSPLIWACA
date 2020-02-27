@@ -43,6 +43,7 @@ def system_identifier(name: str) -> typing.Optional[type]:
 
 
 def get_flags(type_flags: str) -> int:
+    """Get the type flags from a type flag string"""
     if type_flags in ["POS", "POSITIVE"]:
         return TypeFlags.ALLOW_POS
     if type_flags in ["NONNEG", "NONNEGATIVE"]:
@@ -67,7 +68,7 @@ def obeys_flags(number: typing.Union[int, float], flags: int) -> bool:
 
 
 def handle_input(type_name: str) -> typing.Any:
-    """Get input as specified and store the result in env"""
+    """Get input as specified"""
     split_type = type_name.split(" ")
     if len(split_type) > 1:
         if len(split_type) > 2:
