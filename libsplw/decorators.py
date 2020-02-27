@@ -34,4 +34,4 @@ def type_check(func: TFunc) -> TFunc:
             )
         return result
 
-    return out_func
+    return typing.cast(TFunc, out_func)

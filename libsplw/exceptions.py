@@ -7,10 +7,18 @@ class FunctionEndError(SPLIWACAException):
     (it should always reach a RETURN statement first)"""
 
 
-class BadParamType(SPLIWACAException):
+class SPLIWACATypeError(SPLIWACAException):
+    """Raised when a typing mistake was made in SPLIWACA"""
+
+
+class BadParamType(SPLIWACATypeError):
     """Raised when a function or procedure is passed arguments of the wrong type."""
 
 
-class BadReturnType(SPLIWACAException):
+class BadReturnType(SPLIWACATypeError):
     """Raised when a function or procedure returns a value of the wrong type."""
+
+
+class InvalidTypeError(SPLIWACATypeError):
+    """Raised when a type specifier is erroneous"""
 
