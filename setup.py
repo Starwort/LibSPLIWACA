@@ -6,8 +6,8 @@ from setuptools import setup
 
 ROOT = pathlib.Path(__file__).parent
 
-with open(ROOT / "libsplw" / "requirements.txt", "r", encoding="utf-8") as f:
-    REQUIREMENTS = f.read().splitlines()
+# with open(ROOT / "libsplw" / "requirements.txt", "r", encoding="utf-8") as f:
+#     REQUIREMENTS = f.read().splitlines()
 
 setup(
     name="libspl",
@@ -19,10 +19,10 @@ setup(
         "Code": "https://github.com/Starwort/LibSPLIWACA",
         "Issue tracker": "https://github.com/Starwort/LibSPLIWACA/issues",
     },
-    version="0.0.2",
+    version="0.0.3",
     packages=["libsplw"],
     include_package_data=True,
-    install_requires=REQUIREMENTS,
+    # install_requires=REQUIREMENTS,
     python_requires=">=3.6.0",
     keywords="LibSPLIWACA SPLIWACA splw",
     classifiers=[
