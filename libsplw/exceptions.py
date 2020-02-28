@@ -11,6 +11,10 @@ class SPLIWACATypeError(SPLIWACAException):
     """Raised when a typing mistake was made in SPLIWACA"""
 
 
+class VariableLookupError(SPLIWACAException):
+    """Raised when looking up a variable failed and all failsafes fell through"""
+
+
 class BadParamType(SPLIWACATypeError):
     """Raised when a function or procedure is passed arguments of the wrong type."""
 
