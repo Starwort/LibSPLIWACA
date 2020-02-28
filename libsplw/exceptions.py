@@ -14,6 +14,12 @@ class SPLIWACATypeError(SPLIWACAException):
 class VariableLookupError(SPLIWACAException):
     """Raised when looking up a variable failed and all failsafes fell through"""
 
+class BadFieldError(SPLIWACATypeError):
+    '''Raised when assigning to a field that doesn't exist'''
+
+class FieldTypeError(SPLIWACATypeError):
+    '''Raised when assigning to a field of the wrong type'''
+
 
 class BadParamType(SPLIWACATypeError):
     """Raised when a function or procedure is passed arguments of the wrong type."""
