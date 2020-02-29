@@ -10,22 +10,61 @@ from .exceptions import InvalidTypeError, VariableLookupError
 from importlib import import_module
 import re
 
-def get_safe(variable_dict: typing.Dict[str, typing.Any], variable: str, allow_splw_imports: bool=True, allow_py_imports: bool = True, allow_bare_words: bool =True):
+
+def import_safe(module: str):
+    allow_splw_imports = True
+    allow_py_imports = True
+    if allow_splw_imports:
+        from sys import stderr
+
+        print("Currently unsupported", file=stderr)
+    if allow_py_imports:
+        try:
+            return import_module(module)
+        except ModuleNotFoundError:
+            print(
+                "Module {} not found. Importing pip to attempt to fetch it. This may take a moment".format(
+                    module
+                )
+            )
+            from pip._internal import main  # type: ignore
+
+            print("Loaded pip. Attempting to fetch as a package from PyPI")
+            main(["install", module, "--user"])
+            try:
+                return import_module(module)
+            except ModuleNotFoundError:
+                pass
+
+
+def get_safe(
+    variable_dict: typing.Dict[str, typing.Any],
+    variable: str,
+    allow_splw_imports: bool = True,
+    allow_py_imports: bool = True,
+    allow_bare_words: bool = True,
+):
     """Get a variable from a variable dict safely; with failsafes"""
     try:
         return variable_dict[variable]
     except:
         if allow_splw_imports:
             from sys import stderr
-            print('Currently unsupported', file=stderr)
+
+            print("Currently unsupported", file=stderr)
         if allow_py_imports:
             try:
                 return import_module(variable)
             except ModuleNotFoundError:
-                print('Module {} not found. Importing pip to attempt to fetch it. This may take a moment'.format(variable))
+                print(
+                    "Module {} not found. Importing pip to attempt to fetch it. This may take a moment".format(
+                        variable
+                    )
+                )
                 from pip._internal import main
-                print('Loaded pip. Attempting to fetch as a package from PyPI')
-                main(['install',variable,'--user'])
+
+                print("Loaded pip. Attempting to fetch as a package from PyPI")
+                main(["install", variable, "--user"])
                 try:
                     return import_module(variable)
                 except ModuleNotFoundError:
@@ -33,6 +72,7 @@ def get_safe(variable_dict: typing.Dict[str, typing.Any], variable: str, allow_s
         if allow_bare_words:
             return variable
         raise VariableLookupError
+
 
 def system_identifier(name: str) -> typing.Optional[type]:
     """Get a Python type from its SPLW name"""
