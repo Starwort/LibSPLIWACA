@@ -19,7 +19,7 @@ setup(
         "Code": "https://github.com/Starwort/LibSPLIWACA",
         "Issue tracker": "https://github.com/Starwort/LibSPLIWACA/issues",
     },
-    version="0.1.2",
+    version="0.1.3",
     packages=["libsplw", "libsplw.stdlib"],
     include_package_data=True,
     # install_requires=REQUIREMENTS,
