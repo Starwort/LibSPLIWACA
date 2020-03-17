@@ -1,4 +1,5 @@
 import typing
+from types import ModuleType
 from .constants import (
     INPUT_PROMPTS,
     TYPE_NAMES,
@@ -8,12 +9,26 @@ from .constants import (
 )
 from .exceptions import InvalidTypeError, VariableLookupError
 from importlib import import_module
+from .splw_types import *
 import re
 
 
-def import_safe(module: str, allow_pip_install: bool = True):
+def import_safe(
+    module: str, allow_py_imports: bool = True, allow_pip_install: bool = True
+) -> typing.Optional[ModuleType]:
+    """Forcibly import a module. Allows suppression of native package search
+
+    Arguments:
+        module {str} -- Name of module to look up
+
+    Keyword Arguments:
+        allow_py_imports {bool} -- Allow native package import (default: {True})
+        allow_pip_install {bool} -- Allow native package search (default: {True})
+
+    Returns:
+        Optional[ModuleType] -- Either the imported module, or None if it could not be loaded.
+    """
     allow_splw_imports = True
-    allow_py_imports = True
     if allow_splw_imports:
         from sys import stderr
 
@@ -45,8 +60,25 @@ def get_safe(
     allow_py_imports: bool = True,
     allow_pip_install: bool = True,
     allow_bare_words: bool = True,
-):
-    """Get a variable from a variable dict safely; with failsafes"""
+) -> SPLWType:
+    """Get a variable from a variable dict safely; with failsafes
+
+    Arguments:
+        variable_dict {Dict[str, Any]} -- The environment variables
+        variable {str} -- The variable name to look up
+
+    Keyword Arguments:
+        allow_splw_imports {bool} -- Allow SPLW import failsafe (default: {True})
+        allow_py_imports {bool} -- Allow native import failsafe (default: {True})
+        allow_pip_install {bool} -- Allow native package search (default: {True})
+        allow_bare_words {bool} -- Allow coercion to str (default: {True})
+
+    Raises:
+        VariableLookupError: All failsafes disabled or failed
+
+    Returns:
+        SPLWType -- Located variable
+    """
     try:
         return variable_dict[variable]
     except:
@@ -77,23 +109,24 @@ def get_safe(
         raise VariableLookupError
 
 
-def system_identifier(name: str) -> typing.Optional[type]:
-    """Get a Python type from its SPLW name"""
+def system_identifier(name: str) -> typing.Optional[SPLWType]:
+    """Get a Python type from its valid SPLW type names
+
+    Arguments:
+        name {str} -- the SPLW type name
+
+    Returns:
+        Optional[SPLWType] -- The type, or None if it could not be resolved
+    """
     rv: typing.Optional[type] = None
     if name in ["str", "STR", "Str", "string", "STRING", "String"]:
-        rv = str
+        rv = SPLWString
     if name in ["int", "INT", "Int", "integer", "INTEGER", "Integer"]:
         rv = int
     if name in [
-        "float",
-        "FLOAT",
-        "Float",
-        "real",
-        "REAL",
-        "Real",
-        "number",
-        "NUMBER",
-        "Number",
+        method(i)
+        for method in (str.upper, str.lower, str.title)
+        for i in ("float", "real", "number")
     ]:
         rv = float
     if name in [
@@ -101,16 +134,26 @@ def system_identifier(name: str) -> typing.Optional[type]:
         for method in (str.upper, str.lower, str.title)
         for i in ("list", "array", "tuple")
     ]:
-        rv = list
+        rv = SPLWList
     if name in ["bool", "BOOL", "Bool", "boolean", "BOOLEAN", "Boolean"]:
         rv = bool
     if name in ["complex", "Complex", "COMPLEX"]:
-        rv = complex
+        rv = SPLWComplex
     return rv
 
 
 def get_flags(type_flags: str) -> int:
-    """Get the type flags from a type flag string"""
+    """Get the type flags from a type flag string
+
+    Arguments:
+        type_flags {str} -- The type flag string, e.g. POS
+
+    Raises:
+        InvalidTypeError: The type descriptor is invalid
+
+    Returns:
+        int -- The type flags, using `constants.TypeFlags` values
+    """
     if type_flags in ["POS", "POSITIVE"]:
         return TypeFlags.ALLOW_POS
     if type_flags in ["NONNEG", "NONNEGATIVE"]:
@@ -124,7 +167,16 @@ def get_flags(type_flags: str) -> int:
     raise InvalidTypeError("Invalid type flag: " + repr(type_flags))
 
 
-def obeys_flags(number: typing.Union[int, float], flags: int) -> bool:
+def obeys_flags(number: SPLWNumber, flags: int) -> bool:
+    """Determines if the number specified obeys the flags specified
+
+    Arguments:
+        number {SPLWNumber} -- Any numeric type
+        flags {int} -- A combination of TypeFlags values
+
+    Returns:
+        bool -- `True` if `number` is valid for `flags`
+    """
     if flags & TypeFlags.ALLOW_ZERO and number == 0:
         return True
     if flags & TypeFlags.ALLOW_POS and number > 0:
@@ -134,8 +186,20 @@ def obeys_flags(number: typing.Union[int, float], flags: int) -> bool:
     return False
 
 
-def handle_input(type_name: str) -> typing.Any:
-    """Get input as specified"""
+def handle_input(type_name: str) -> SPLWType:
+    """Get input for given type name
+
+    Arguments:
+        type_name {str} -- SPLW type descriptor
+
+    Raises:
+        InvalidTypeError: Type descriptor is too long
+        InvalidTypeError: Type descriptor received inappropriate flags
+        InvalidTypeError: Invalid type descriptor
+
+    Returns:
+        SPLWType -- The value provided by the user
+    """
     split_type = type_name.split(" ")
     if len(split_type) > 1:
         if len(split_type) > 2:
@@ -146,7 +210,7 @@ def handle_input(type_name: str) -> typing.Any:
                 + " (max 2)"
             )
         input_type = system_identifier(split_type[1])
-        if input_type not in (int, float):
+        if input_type not in OBEYS_FLAGS:
             raise InvalidTypeError(
                 repr(split_type[1].upper()) + " cannot receive type flags"
             )
@@ -154,24 +218,29 @@ def handle_input(type_name: str) -> typing.Any:
     else:
         input_type = system_identifier(type_name)
         flags = TypeFlags.DEFAULT
-    if input_type in (str, int, float):
+
+    if input_type is None:
+        raise InvalidTypeError(type_name.upper() + " is not a valid type descriptor")
+
+    if input_type in (SPLWString, int, float):
         rv = None
         while rv is None:
             try:
                 rv = input_type(input(INPUT_PROMPTS[input_type]))
-                if input_type in (int, float):
+                if input_type in OBEYS_FLAGS:
                     if not obeys_flags(rv, flags):
                         print(
                             f"That wasn't {TYPE_FLAG_NAMES[flags].format(TYPE_NAMES[input_type][2:])}, try again"
                         )
+                        rv = None
             except Exception:
                 print(f"That wasn't {TYPE_NAMES[input_type]}, try again")
         return rv
-    elif input_type == list:
+    elif input_type == SPLWList:
         rv = None
         while rv is None:
             try:
-                rv = input(INPUT_PROMPTS[input_type]).split(", ")
+                rv = input_type(input(INPUT_PROMPTS[input_type]).split(", "))
             except Exception:
                 print(f"That wasn't {TYPE_NAMES[input_type]}, try again")
         return rv
@@ -185,7 +254,7 @@ def handle_input(type_name: str) -> typing.Any:
             except Exception:
                 print(f"That wasn't {TYPE_NAMES[input_type]}, try again")
         return rv
-    elif input_type == complex:
+    elif input_type == SPLWComplex:
         rv = None
         while rv is None:
             try:
@@ -195,13 +264,19 @@ def handle_input(type_name: str) -> typing.Any:
                     print(f"That wasn't {TYPE_NAMES[input_type]}, try again")
                     continue
                 # [print(match.group(i)) for i in range(7)]
-                real = int(match.group(1) or 0)
-                imag = int(
+                real = float(match.group(1) or 0)
+                imag = float(
                     (match.group(5) + (match.group(6) or "1"))
                     if match.group(5)
                     else "0"
                 )
-                rv = complex(real, imag)
+                rv = input_type(real, imag)
+                if input_type in OBEYS_FLAGS:
+                    if not obeys_flags(rv, flags):
+                        print(
+                            f"That wasn't {TYPE_FLAG_NAMES[flags].format(TYPE_NAMES[input_type][2:])}, try again"
+                        )
+                        rv = None
             except Exception:
                 print(f"That wasn't {TYPE_NAMES[input_type]}, try again")
         return rv

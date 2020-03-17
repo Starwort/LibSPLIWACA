@@ -1,3 +1,6 @@
+from .splw_types import SPLWComplex, SPLWList, SPLWString
+
+
 class TypeFlags:
     DEFAULT = 0b111
     ALLOW_POS = 0b001
@@ -6,20 +9,20 @@ class TypeFlags:
 
 
 INPUT_PROMPTS = {
-    str: "Please enter some text\n>>> ",
+    SPLWString: "Please enter some text\n>>> ",
     int: "Please enter a whole number\n>>> ",
     float: "Please enter a number\n>>> ",
-    list: "Please enter some values, separated by commas\n>>> ",
+    SPLWList: "Please enter some values, separated by commas\n>>> ",
     bool: "[Y]es/[N]o\n>>> ",
-    complex: "Please enter a complex number\n>>> ",
+    SPLWComplex: "Please enter a complex number\n>>> ",
 }
 TYPE_NAMES = {
-    str: "text",
+    SPLWString: "text",
     int: "a whole number",
     float: "a number",
-    list: "a list of values",
+    SPLWList: "a list of values",
     bool: "[Y]es or [N]o",
-    complex: "a complex number",
+    SPLWComplex: "a complex number",
 }
 TYPE_FLAG_NAMES = {
     TypeFlags.DEFAULT: "any {}",
