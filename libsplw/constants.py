@@ -29,5 +29,5 @@ TYPE_FLAG_NAMES = {
     TypeFlags.ALLOW_ZERO | TypeFlags.ALLOW_NEG: "a negative {} or zero",
     TypeFlags.ALLOW_NEG: "a negative {}",
 }
-COMPLEX_REGEX = r"((\+|\-?)\d+(\.\d+)?)??((\+|\-?)(\d+(\.\d+)?)?i)?"
+COMPLEX_REGEX = r"^((\+?|\-)\d+(\.\d+)?)??(((\+?|\-)(\d+(\.\d+)?))i)?$"
 
